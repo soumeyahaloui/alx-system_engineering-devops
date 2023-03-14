@@ -1,2 +1,2 @@
 #!/bin/bash
-tr 'A-Za_z' 'N-ZA-Mn-za-m'
+read -p "Enter a string: " str; echo "$str" | tr 'A-Za-z' 'N-ZA-Mn-za-m' | tee >(tr 'N-ZA-Mn-za-m' 'A-Za-z' >&2)
