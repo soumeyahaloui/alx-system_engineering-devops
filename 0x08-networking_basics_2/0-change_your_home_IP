@@ -1,1 +1,22 @@
-2
+#!/usr/bin/env bash
+# This script configures the DNS resolution for localhost and facebook.com.
+
+# Check if running with superuser privileges
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root. Use 'sudo $0'." >&2
+    exit 1
+fi
+
+# Update the DNS resolution for localhost
+echo "127.0.0.2 localhost" > /etc/hosts
+
+# Update the DNS resolution for facebook.com
+echo "8.8.8.8 facebook.com" >> /etc/hosts
+
+# Notify the user about the changes
+echo "DNS resolution updated:"
+echo "localhost now resolves to 127.0.0.2"
+echo "facebook.com now resolves to 8.8.8.8"
+
+# Flush DNS cache (may require a service restart on some systems)
+systemctl restart systemd-resolved
