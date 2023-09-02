@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
-# Displays its own PID.
+#!/usr/bin/env ruby
 
-echo $$
+puts ARGV[0].scan(/[S]chool/).join
