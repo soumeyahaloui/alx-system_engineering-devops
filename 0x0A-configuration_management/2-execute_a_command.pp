@@ -1,6 +1,6 @@
-# Puppet Manifest to Kill a Process Named "killmenow"
+# kill process killmenow
 
-exec { 'kill_killmenow':
-  command => 'pkill -f "killmenow"',
-  onlyif  => 'pgrep -f "killmenow"',
+exec { 'pkill':
+  command  => 'pkill killmenow',
+  provider => 'shell',
 }
