@@ -1,0 +1,8 @@
+# ~/.ssh/config
+
+# Use the private key ~/.ssh/school for authentication
+Host *
+    IdentityFile ~/.ssh/school
+
+# Disable password authentication
+PasswordAuthentication no
