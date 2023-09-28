@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# This script installs Nginx on an Ubuntu machine and configures it.
+
+# Check if script is run as root
+if [ "$(id -u)" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+
+# Install Nginx with -y flag for non-interactive installation.
+apt-get update
+apt-get install -y nginx
+
+# Check if Nginx installation was successful
+if [ $? -ne 0 ]; then
+    echo "Nginx installation failed."
+    exit 1
+fi
+
+# Create a simple "Hello World!" HTML page
+cat <<EOF > /var/www/html/index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World!</title>
+</head>
+<body>
+    <h1>Hello World!</h1>
+</body>
+</html>
+EOF
+
+# Check if Nginx is already running and restart if needed
+if pidof nginx >/dev/null; then
+    echo "Nginx is already running. Restarting..."
+    nginx -s reload
+else
+    echo "Starting Nginx..."
+    service nginx start
+fi
+
+# Verify that Nginx is listening on port 80
+if ! nc -z localhost 80; then
+    echo "Nginx is not listening on port 80."
+    exit 1
+fi
+
+echo "Nginx installed and configured successfully."
