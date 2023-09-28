@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# This script configures a domain name and DNS records for web-01 server.
+
+# Define your domain name (replace 'yourdomain.tech' with your actual domain name)
+DOMAIN_NAME="yourdomain.tech"
+
+# Define your web server's IP address (replace with the actual IP)
+WEB_SERVER_IP="your_web_server_ip"
+
+# Update DNS records
+echo "Updating DNS records for $DOMAIN_NAME to point to $WEB_SERVER_IP"
+curl -X PUT "https://api.techdomains.com/v1/dns/records" -H "Authorization: Bearer YOUR_API_KEY" -d "{
+  \"name\": \"$DOMAIN_NAME\",
+  \"type\": \"A\",
+  \"value\": \"$WEB_SERVER_IP\",
+  \"ttl\": 3600
+}"
+
+# Verify DNS propagation (wait for 1-2 hours)
+echo "Waiting for DNS propagation (1-2 hours)..."
+sleep 7200  # Sleep for 2 hours (adjust as needed)
+
+# Check DNS resolution
+echo "Checking DNS resolution for $DOMAIN_NAME"
+dig +short $DOMAIN_NAME
+
+# Verify the Registrar
+echo "Verifying Registrar..."
+REGISTRAR_JSON=$(curl -s "https://whois.whoisxmlapi.com/whoisserver/WhoisService?apiKey=YOUR_API_KEY&domainName=$DOMAIN_NAME&outputFormat=JSON")
+REGISTRAR_NAME=$(echo $REGISTRAR_JSON | jq -r .WhoisRecord.registrarName)
+if [ "$REGISTRAR_NAME" = "Dotserve Inc" ]; then
+  echo "Registrar: Dotserve Inc (Verified)"
+else
+  echo "Registrar verification failed!"
+fi
