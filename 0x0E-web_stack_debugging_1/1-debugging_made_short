@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# This script fixes the Nginx issue in 5 lines or less
+
+apt-get update
+apt-get install -y nginx
+echo "daemon off;" >> /etc/nginx/nginx.conf
+sed -i 's/default_server;/default_server ipv6only=on;/' /etc/nginx/sites-available/default
+service nginx start
