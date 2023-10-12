@@ -1,36 +1,38 @@
 #!/usr/bin/env bash
+# Script to display information about subdomains of a given domain
 
-# This script audits DNS records for specified subdomains of a given domain.
+# Function to get IP address for a subdomain
+get_ip_address() {
+    dig "$1" +short
+}
 
-# Check if the correct number of arguments is provided.
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-    echo "Usage: $0 domain [subdomain]"
-    exit 1
-fi
+# Function to display subdomain information
+display_subdomain_info() {
+    local domain="$1"
+    local subdomain="$2"
+    local ip_address=$(get_ip_address "$subdomain.$domain")
 
-# Set domain and subdomain variables based on user input.
-domain="$1"
-subdomain="$2"
-
-# Define a function to query DNS records.
-query_dns() {
-    domain="$1"
-    subdomain="$2"
-    dig_output=$(dig +short "$subdomain.$domain")
-    if [ -n "$dig_output" ]; then
-        echo "The subdomain $subdomain is a A record and points to $dig_output"
+    if [ -n "$ip_address" ]; then
+        echo "The subdomain $subdomain is a $(dig "$subdomain.$domain" +short +type | awk '{print $2}') record and points to $ip_address"
     else
-        echo "The subdomain $subdomain does not have a valid A record"
+        echo "The subdomain $subdomain does not exist or could not be resolved."
     fi
 }
 
-# If no subdomain is specified, query records for default subdomains.
-if [ -z "$subdomain" ]; then
-    subdomains=("www" "lb-01" "web-01" "web-02")
-    for sub in "${subdomains[@]}"; do
-        query_dns "$domain" "$sub"
-    done
+# Main script
+if [ "$#" -eq 1 ]; then
+    # When only domain parameter is provided, display information for default subdomains
+    domain="$1"
+    display_subdomain_info "$domain" "www"
+    display_subdomain_info "$domain" "lb-01"
+    display_subdomain_info "$domain" "web-01"
+    display_subdomain_info "$domain" "web-02"
+elif [ "$#" -eq 2 ]; then
+    # When domain and subdomain parameters are provided, display information for the specified subdomain
+    domain="$1"
+    subdomain="$2"
+    display_subdomain_info "$domain" "$subdomain"
 else
-    # If a subdomain is specified, query records for that subdomain.
-    query_dns "$domain" "$subdomain"
+    echo "Usage: $0 <domain> [subdomain]"
+    exit 1
 fi
