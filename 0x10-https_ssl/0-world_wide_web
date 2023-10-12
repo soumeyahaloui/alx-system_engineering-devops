@@ -1,42 +1,36 @@
 #!/usr/bin/env bash
-# Script to display information about subdomains
 
-# Function to get DNS information for a specific subdomain
-get_dns_info() {
-    local subdomain="$1"
-    local domain="$2"
-    local dns_info
+# This script audits DNS records for specified subdomains of a given domain.
 
-    dns_info=$(dig "$subdomain.$domain" +short)
-    if [ -n "$dns_info" ]; then
-        echo "The subdomain $subdomain is a A record and points to $dns_info"
-    else
-        echo "The subdomain $subdomain does not exist or has no A record."
-    fi
-}
-
-# Main function to handle subdomain information
-main() {
-    local domain="$1"
-    local subdomain="$2"
-
-    # Default subdomains to check
-    subdomains=("www" "lb-01" "web-01" "web-02")
-
-    if [ -n "$subdomain" ]; then
-        get_dns_info "$subdomain" "$domain"
-    else
-        for sub in "${subdomains[@]}"; do
-            get_dns_info "$sub" "$domain"
-        done
-    fi
-}
-
-# Check if required arguments are provided
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <domain> [subdomain]"
+# Check if the correct number of arguments is provided.
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Usage: $0 domain [subdomain]"
     exit 1
 fi
 
-# Call the main function with provided arguments
-main "$1" "$2"
+# Set domain and subdomain variables based on user input.
+domain="$1"
+subdomain="$2"
+
+# Define a function to query DNS records.
+query_dns() {
+    domain="$1"
+    subdomain="$2"
+    dig_output=$(dig +short "$subdomain.$domain")
+    if [ -n "$dig_output" ]; then
+        echo "The subdomain $subdomain is a A record and points to $dig_output"
+    else
+        echo "The subdomain $subdomain does not have a valid A record"
+    fi
+}
+
+# If no subdomain is specified, query records for default subdomains.
+if [ -z "$subdomain" ]; then
+    subdomains=("www" "lb-01" "web-01" "web-02")
+    for sub in "${subdomains[@]}"; do
+        query_dns "$domain" "$sub"
+    done
+else
+    # If a subdomain is specified, query records for that subdomain.
+    query_dns "$domain" "$subdomain"
+fi
