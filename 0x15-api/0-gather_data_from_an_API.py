@@ -19,7 +19,7 @@ def fetch_employee_todo(employee_id):
 
     print(f"Employee {employee_name} is done with tasks({num_done_tasks}/{total_tasks}):")
     for task in done_tasks:
-        print(f"\t {task.get('title')}")
+        print(f"\t{task.get('title')}")
 
 
 if __name__ == "__main__":
