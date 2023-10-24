@@ -4,10 +4,10 @@
 import requests
 from sys import argv
 
-if __name__ == "__main__":
-    employee_id = argv[1]
-    user_url = "https://jsonplaceholder.typicode.com/users/{}".format(employee_id)
-    todos_url = "https://jsonplaceholder.typicode.com/todos?userId={}".format(employee_id)
+
+def fetch_employee_todo(employee_id):
+    user_url = f"https://jsonplaceholder.typicode.com/users/{employee_id}"
+    todos_url = f"https://jsonplaceholder.typicode.com/todos?userId={employee_id}"
 
     response_user = requests.get(user_url).json()
     response_todos = requests.get(todos_url).json()
@@ -17,6 +17,13 @@ if __name__ == "__main__":
     total_tasks = len(response_todos)
     num_done_tasks = len(done_tasks)
 
-    print("Employee {} is done with tasks({}/{}):".format(employee_name, num_done_tasks, total_tasks))
+    print(f"Employee {employee_name} is done with tasks({num_done_tasks}/{total_tasks}):")
     for task in done_tasks:
-        print("\t {}".format(task.get('title')))
+        print(f"\t {task.get('title')}")
+
+
+if __name__ == "__main__":
+    if len(argv) != 2:
+        print("Usage: python3 0-gather_data_from_an_API.py <employee_id>")
+    else:
+        fetch_employee_todo(int(argv[1]))
