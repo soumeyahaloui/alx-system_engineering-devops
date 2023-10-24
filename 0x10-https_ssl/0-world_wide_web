@@ -1,37 +1,20 @@
 #!/usr/bin/env bash
-# Script to display information about subdomains
+# This script displays information about subdomains of a given domain
 
-# Function to query and display DNS records
-query_dns() {
-    local subdomain="$1"
-    local domain="$2"
-    local record_type="$3"
-    local destination
-    destination=$(dig "$subdomain.$domain" +short)
-    echo "The subdomain $subdomain is a $record_type record and points to $destination"
-}
-
-# Main function to handle subdomain queries
-main() {
-    local domain="$1"
-    local subdomain="$2"
-
+get_domain_info() {
+    domain=$1
+    subdomain=$2
     if [ -z "$subdomain" ]; then
-        # Default subdomains to check
         subdomains=("www" "lb-01" "web-01" "web-02")
-        for sub in "${subdomains[@]}"; do
-            query_dns "$sub" "$domain" "A"
-        done
     else
-        query_dns "$subdomain" "$domain" "A"
+        subdomains=("$subdomain")
     fi
+
+    for sub in "${subdomains[@]}"; do
+        record_type=$(dig $sub.$domain | awk '/ANSWER SECTION:/ {getline; print $4}')
+        destination=$(dig $sub.$domain | awk '/ANSWER SECTION:/ {getline; print $5}')
+        echo "The subdomain $sub is a $record_type record and points to $destination"
+    done
 }
 
-# Check if required arguments are provided
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <domain> [subdomain]"
-    exit 1
-fi
-
-# Call the main function with provided arguments
-main "$@"
+get_domain_info "$1" "$2"
