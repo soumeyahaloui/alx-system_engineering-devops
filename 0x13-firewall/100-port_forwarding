@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Configure ufw to forward port 8080 to port 80
+sudo ufw route allow proto tcp from any to any port 8080
+
+# Save ufw configuration
+sudo ufw reload
