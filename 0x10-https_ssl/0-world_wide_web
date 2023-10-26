@@ -4,17 +4,16 @@
 display_info() {
     local domain="$1"
     local subdomain="$2"
-    
+
     # Resolve the subdomain and get the record type and destination
-    local result=$(nslookup "${subdomain}.${domain}" | awk '
+    local result=$(dig +short "${subdomain}.${domain}" | awk -v sub="${subdomain}" '
         BEGIN { found = 0; record_type = ""; destination = "" }
-        /^Name:/ { found = 1; }
-        /^Server:/ { found = 0; }
-        /Address:/ { if (found) destination = $2; }
-        /^[[:alnum:]]/ { if (found) record_type = $1; }
-        END { if (record_type != "") print "The subdomain", "'"$subdomain"'", "is a", record_type, "record and points to", destination; }
+        /^[[:digit:].]+$/ { if (found) destination = $0; }
+        /^;; ANSWER SECTION:$/ { found = 1; next; }
+        found && /^[[:alnum:]-]+/ { if (found) record_type = $0; found = 0; }
+        END { if (record_type != "") print "The subdomain", sub, "is a", record_type, "record and points to", destination; }
     ')
-    
+
     if [ -n "$result" ]; then
         echo "$result"
     else
