@@ -1,41 +1,30 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# script to report information about server domains
+# shellcheck disable=SC2086
+check_domain() {
+	# awk will use record seperator of space
+	# space sperated list of sub domains
+	SUBDOMAINS='www lb-01 web-01 web-02'
 
-# Function to display information about a subdomain
-display_info() {
-    local domain="$1"
-    local subdomain="$2"
-
-    # Resolve the subdomain and get the record type and destination
-    local result=$(dig +short "${subdomain}.${domain}" | awk -v sub="${subdomain}" '
-        BEGIN { found = 0; record_type = ""; destination = "" }
-        /^[[:digit:].]+$/ { if (found) destination = $0; }
-        /^;; ANSWER SECTION:$/ { found = 1; next; }
-        found && /^[[:alnum:]-]+/ { if (found) record_type = $0; found = 0; }
-        END { if (record_type != "") print "The subdomain", sub, "is a", record_type, "record and points to", destination; }
-    ')
-
-    if [ -n "$result" ]; then
-        echo "$result"
-    else
-        echo "Subdomain not found: $subdomain"
-    fi
+	if [ -z "$1" ]; then
+		exit
+	fi
+	# no sub domain specified, do all
+	if [ -z "$2" ]; then
+		echo "$SUBDOMAINS" | awk -v domain="$1"\
+		'BEGIN { RS=" " }
+		{split($0,ARR," ");
+		cmd = "dig " ARR[1]"."domain " | grep -A1 \"ANSWER SECTION:\" | tail -n1";
+		system(cmd)
+		close(cmd)}' | awk\
+		'{
+		split($0, DOMS, ".");
+		print "The subdomain " DOMS[1] " is a " $4 " record and points to " $5}'
+	else
+		dig "$2.$1" | grep -A1 "ANSWER SECTION:" | tail -n1 | awk\
+		'{
+		split($0, DOMS, ".");
+		print "The subdomain " DOMS[1] " is a " $4 " record and points to " $5}'
+	fi
 }
-
-domain="$1"
-subdomain="$2"
-
-if [ -z "$domain" ]; then
-    echo "Please provide the domain name as the first argument."
-    exit 1
-fi
-
-if [ -z "$subdomain" ]; then
-    # Display information for default subdomains
-    display_info "$domain" "www"
-    display_info "$domain" "lb-01"
-    display_info "$domain" "web-01"
-    display_info "$domain" "web-02"
-else
-    # Display information for the specified subdomain
-    display_info "$domain" "$subdomain"
-fi
+check_domain "$1" "$2"
