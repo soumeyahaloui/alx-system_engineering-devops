@@ -1,47 +1,42 @@
 #!/bin/bash
 
-# Function to display subdomain information
-display_subdomain_info() {
-    domain="$1"
-    subdomain="$2"
-
-    # Associative array to store subdomains and their corresponding IPs
-    declare -A subdomains
-    subdomains["www"]="100.158.217.225"
-    subdomains["lb-01"]="54.158.217.225"
-    subdomains["web-01"]="100.25.168.77"
-    subdomains["web-02"]="100.26.253.245"
-
-    # If subdomain parameter is provided, display information for the specified subdomain
-    if [[ -n "$subdomain" ]]; then
-        if [[ -n "${subdomains[$subdomain]}" ]]; then
-            echo "The subdomain $subdomain is an A record and points to ${subdomains[$subdomain]}"
-        else
-            echo "The subdomain $subdomain does not exist for the domain $domain"
-        fi
+# Function to display information about a subdomain
+display_info() {
+    local domain="$1"
+    local subdomain="$2"
+    
+    # Resolve the subdomain and get the record type and destination
+    local result=$(nslookup "${subdomain}.${domain}" | awk '
+        BEGIN { found = 0; record_type = ""; destination = "" }
+        /^Name:/ { found = 1; }
+        /^Server:/ { found = 0; }
+        /Address:/ { if (found) destination = $2; }
+        /^[[:alnum:]]/ { if (found) record_type = $1; }
+        END { if (record_type != "") print "The subdomain", "'"$subdomain"'", "is a", record_type, "record and points to", destination; }
+    ')
+    
+    if [ -n "$result" ]; then
+        echo "$result"
     else
-        # If only domain parameter is provided, display information for default subdomains
-        for sub in www lb-01 web-01 web-02; do
-            if [[ -n "${subdomains[$sub]}" ]]; then
-                echo "The subdomain $sub is an A record and points to ${subdomains[$sub]}"
-            else
-                echo "The subdomain $sub does not exist for the domain $domain"
-            fi
-        done
+        echo "Subdomain not found: $subdomain"
     fi
 }
 
-# Main script logic
-if [[ $# -eq 1 ]]; then
-    # If only domain parameter is provided
-    domain="$1"
-    display_subdomain_info "$domain"
-elif [[ $# -eq 2 ]]; then
-    # If both domain and subdomain parameters are provided
-    domain="$1"
-    subdomain="$2"
-    display_subdomain_info "$domain" "$subdomain"
+domain="$1"
+subdomain="$2"
+
+if [ -z "$domain" ]; then
+    echo "Please provide the domain name as the first argument."
+    exit 1
+fi
+
+if [ -z "$subdomain" ]; then
+    # Display information for default subdomains
+    display_info "$domain" "www"
+    display_info "$domain" "lb-01"
+    display_info "$domain" "web-01"
+    display_info "$domain" "web-02"
 else
-    # If invalid number of parameters are provided
-    echo "Invalid number of parameters. Usage: $0 <domain> [<subdomain>]"
+    # Display information for the specified subdomain
+    display_info "$domain" "$subdomain"
 fi
